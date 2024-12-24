@@ -12,7 +12,15 @@ connectDB();
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors(
+    cors({
+      origin: ["https://www.hellomagent.com"],
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  )
+);
 app.use(express.json());
 app.use(globalLimiter);
 
