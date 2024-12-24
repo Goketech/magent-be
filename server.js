@@ -1,9 +1,9 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const connectDB = require('./config/database');
-const { globalLimiter } = require('./middlewares/rateLimit');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const connectDB = require("./config/database");
+const { globalLimiter } = require("./middlewares/rateLimit");
 
 const app = express();
 
@@ -17,13 +17,20 @@ app.use(express.json());
 app.use(globalLimiter);
 
 // Routes
-app.use('/auth', require('./routes/auth'));
-app.use('/api', require('./routes/api'));
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to the API" });
+});
+app.get("/workspace", (req, res) => {
+  res.json({ message: "Welcome to the API" });
+});
+
+app.use("/auth", require("./routes/auth"));
+app.use("/api", require("./routes/api"));
 
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
+  res.status(500).json({ error: "Something broke!" });
 });
 
 const PORT = process.env.PORT || 3000;
