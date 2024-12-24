@@ -62,8 +62,21 @@ router.post(
 
       console.log("AI call response:", response);
 
-      const data = await response.json();
-      return data;
+      const reader = response.body.getReader();
+      let result = "";
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += decoder.decode(value, { stream: true });
+      }
+
+      // Parse the result as JSON
+      const data = JSON.parse(result);
+      console.log("AI call data:", data);
+      return res.json(data);
+
     } catch (error) {
       console.error("AI call failed:", error);
       res.status(500).json({ error: "AI call failed" });
