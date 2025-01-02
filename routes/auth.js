@@ -15,7 +15,7 @@ const {
 
 router.post(
   "/register",
-  authLimiter,
+  // authLimiter,
   registerValidation,
   handleValidationErrors,
   register

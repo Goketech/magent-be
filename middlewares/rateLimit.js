@@ -10,5 +10,5 @@ const createRateLimiter = (windowMs, max) => {
 
 module.exports = {
   globalLimiter: createRateLimiter(15 * 60 * 1000, 100), // 100 requests per 15 minutes
-  authLimiter: createRateLimiter(60 * 60 * 1000, 5) // 5 login attempts per hour
+  authLimiter: createRateLimiter(60 * 60 * 1000, 10) // 5 login attempts per hour
 };
