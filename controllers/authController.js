@@ -11,13 +11,13 @@ const register = async (req, res) => {
     const { businessName, email, password } = req.body;
 
     if (await User.findOne({ email })) {
-      return res.status(400).json({ error: "Email already registered" });
+      return res.status(400).json({ message: "Email already registered" });
     }
 
     // Get free plan
     const freePlan = await Plan.findOne({ name: "Free" });
     if (!freePlan) {
-      return res.status(500).json({ error: "Default plan not found" });
+      return res.status(500).json({ message: "Default plan not found" });
     }
 
     const user = new User({
@@ -32,7 +32,7 @@ const register = async (req, res) => {
 
     res.status(201).json({ token });
   } catch (error) {
-    res.status(500).json({ error: "Registration failed" });
+    res.status(500).json({ message: "Registration failed" });
   }
 };
 
@@ -42,13 +42,13 @@ const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const token = generateToken(user._id);
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+    res.status(500).json({ message: "Login failed" });
   }
 };
 
@@ -75,7 +75,7 @@ const googleAuth = async (req, res) => {
     const jwtToken = generateToken(user._id);
     res.json({ token: jwtToken });
   } catch (error) {
-    res.status(500).json({ error: "Google authentication failed" });
+    res.status(500).json({ message: "Google authentication failed" });
   }
 };
 
