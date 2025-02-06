@@ -4,6 +4,8 @@ const {
   register,
   login,
   googleAuth,
+  getNonce,
+  verifySignature,
 } = require("../controllers/authController");
 const { authLimiter } = require("../middlewares/rateLimit");
 const {
@@ -27,6 +29,8 @@ router.post(
   handleValidationErrors,
   login
 );
+router.post("/get-nonce", getNonce);
+router.post("/verify-signature", verifySignature);
 router.post(
   "/google",
   authLimiter,
