@@ -137,9 +137,7 @@ const verifySignature = async (req, res) => {
   }
 
   // Issue JWT
-  const token = jwt.sign({ publicKey }, process.env.JWT_SECRET, {
-    expiresIn: "24h",
-  });
+  const token = generateToken(user._id);
 
   res.json({ token });
 };
