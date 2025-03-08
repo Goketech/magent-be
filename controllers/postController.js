@@ -1,5 +1,9 @@
 const postQueue = require("../shared/queue");
 
+const hostName = process.env.HOST_NAME;
+const serverPort = process.env.SERVER_PORT;
+const agentId = process.env.AGENT_ID;
+
 exports.schedulePost = async (req, res) => {
   const { text, minInterval, maxInterval, duration, accessToken } = req.body;
 
