@@ -76,9 +76,8 @@ exports.schedulePost = async (req, res) => {
 };
 
 exports.generatePost = async (req, res) => {
-  const { topic, firstStyle, secondStyle} = req.body;
+  const { topic, firstStyle, secondStyle } = req.body;
 
-  
   const input = `Generate a precise and engaging tweet on the topic: "${topic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.`;
 
   const response = await fetch(
@@ -95,5 +94,19 @@ exports.generatePost = async (req, res) => {
   );
 
   console.log("AI call response:", response);
+
+  const reader = response.body.getReader();
+  let result = "";
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    result += decoder.decode(value, { stream: true });
+  }
+
+  // Parse the result as JSON
+  const data = JSON.parse(result);
+  console.log("AI call data:", data);
   return res.json(data);
 };
