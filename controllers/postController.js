@@ -5,11 +5,13 @@ const serverPort = process.env.SERVER_PORT;
 const agentId = process.env.AGENT_ID;
 
 exports.schedulePost = async (req, res) => {
-  const { text, minInterval, maxInterval, duration, accessToken } = req.body;
+  const { topic, firstStyle, secondStyle, minInterval, maxInterval, duration, accessToken } = req.body;
 
-  if (!text || !minInterval || !maxInterval || !duration || !accessToken) {
+  if (!topic || !minInterval || !maxInterval || !duration || !accessToken || !firstStyle || !secondStyle) {
     return res.status(400).json({ error: "Missing parameters" });
   }
+
+  const input = `Generate a precise and engaging tweet on the topic: "${topic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.`;
 
   const startTime = Date.now();
   const endTime = startTime + duration * 60 * 60 * 1000; // Convert hours to milliseconds
@@ -26,9 +28,6 @@ exports.schedulePost = async (req, res) => {
     currentTime += delay;
 
     if (currentTime > endTime) break; // Ensure posts don't exceed the duration
-
-    // Generate AI-based content for this time slot
-    const input = `Generate a sample X post following the pattern: ${text}`;
 
     try {
       const response = await fetch(
@@ -63,7 +62,7 @@ exports.schedulePost = async (req, res) => {
       if (data.generatedPost) {
         await postQueue.add(
           "twitter-post",
-          { text: data.generatedPost, accessToken },
+          { text: data[0].text, accessToken },
           { delay }
         );
       }
