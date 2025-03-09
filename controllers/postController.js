@@ -5,9 +5,25 @@ const serverPort = process.env.SERVER_PORT;
 const agentId = process.env.AGENT_ID;
 
 exports.schedulePost = async (req, res) => {
-  const { topic, firstStyle, secondStyle, minInterval, maxInterval, duration, accessToken } = req.body;
+  const {
+    topic,
+    firstStyle,
+    secondStyle,
+    minInterval,
+    maxInterval,
+    duration,
+    accessToken,
+  } = req.body;
 
-  if (!topic || !minInterval || !maxInterval || !duration || !accessToken || !firstStyle || !secondStyle) {
+  if (
+    !topic ||
+    !minInterval ||
+    !maxInterval ||
+    !duration ||
+    !accessToken ||
+    !firstStyle ||
+    !secondStyle
+  ) {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
@@ -22,6 +38,7 @@ exports.schedulePost = async (req, res) => {
       Math.floor(
         Math.random() * (maxInterval - minInterval + 1) + minInterval
       ) *
+      60 *
       60 *
       1000; // Convert minutes to milliseconds
 
@@ -59,7 +76,7 @@ exports.schedulePost = async (req, res) => {
       const data = JSON.parse(result);
       console.log("AI-generated data:", data);
 
-      if (data.generatedPost) {
+      if (data[0].text) {
         await postQueue.add(
           "twitter-post",
           { text: data[0].text, accessToken },

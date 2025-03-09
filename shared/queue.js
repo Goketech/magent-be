@@ -1,6 +1,5 @@
 const { Queue, Worker } = require("bullmq");
 const Redis = require("ioredis");
-const fetch = require("node-fetch");
 
 const redisConnection = new Redis({
   username: process.env.REDIS_USERNAME,
