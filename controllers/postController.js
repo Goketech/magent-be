@@ -27,7 +27,8 @@ exports.schedulePost = async (req, res) => {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
-  const input = `Generate a precise and engaging tweet on the topic: "${topic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.`;
+  const input = `Generate a precise and engaging tweet on the topic: "${topic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.
+  Limit the character length of the tweet to 280 characters. No hashtags allowed.`;
 
   const startTime = Date.now();
   const endTime = startTime + duration * 60 * 60 * 1000; // Convert hours to milliseconds
@@ -94,7 +95,8 @@ exports.schedulePost = async (req, res) => {
 exports.generatePost = async (req, res) => {
   const { topic, firstStyle, secondStyle } = req.body;
 
-  const input = `Generate a precise and engaging tweet on the topic: "${topic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.`;
+  const input = `Generate a precise and engaging tweet on the topic: "${topic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.
+    Limit the character length of the tweet to 280 characters. No hashtags allowed.`;
 
   const response = await fetch(
     `http://${hostName}:${serverPort}/${agentId}/message`,
