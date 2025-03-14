@@ -35,6 +35,10 @@ exports.schedulePost = async (req, res) => {
 
   const startTime = Date.now();
   const endTime = startTime + duration * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+
+  if (startTime >= endTime) {
+    return res.status(400).json({ error: "Invalid duration: end time is before or equal to the start time." });
+  }
   let currentTime = startTime;
 
   while (currentTime < endTime) {
