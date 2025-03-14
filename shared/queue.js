@@ -25,7 +25,10 @@ const worker = new Worker(
       body: JSON.stringify({ text }),
     });
 
+    console.log("Post response:", response);
+
     if (!response.ok) {
+      console.error("Post failed:", await response.json());
       throw new Error("Failed to post on Twitter");
     }
 

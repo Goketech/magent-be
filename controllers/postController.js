@@ -28,11 +28,13 @@ exports.schedulePost = async (req, res) => {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
-  const input = `Generate a precise and engaging tweet on these topics: "${topic}" and "${secondTopic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.
+  const selectedTopic = Math.random() < 0.5 ? topic : secondTopic;
+
+  const input = `Generate a precise and engaging tweet on this topic: "${selectedTopic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.
     Limit the character length of the tweet to 280 characters. No hashtags allowed. Do not ask follow up questions.`;
 
   const startTime = Date.now();
-  const endTime = startTime + duration * 60 * 60 * 1000; // Convert hours to milliseconds
+  const endTime = startTime + duration * 24 * 60 * 60 * 1000; // Convert days to milliseconds
   let currentTime = startTime;
 
   while (currentTime < endTime) {
@@ -42,7 +44,7 @@ exports.schedulePost = async (req, res) => {
       ) *
       60 *
       60 *
-      1000; // Convert minutes to milliseconds
+      1000; // Convert hours to milliseconds
 
     currentTime += delay;
 
@@ -96,7 +98,9 @@ exports.schedulePost = async (req, res) => {
 exports.generatePost = async (req, res) => {
   const { topic, secondTopic, firstStyle, secondStyle } = req.body;
 
-  const input = `Generate a precise and engaging tweet on these topics: "${topic}" and "${secondTopic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.
+  const selectedTopic = Math.random() < 0.5 ? topic : secondTopic;
+
+  const input = `Generate a precise and engaging tweet on this topic: "${selectedTopic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}". Ensure it is clear, concise, concrete, correct, complete, courteous, and coherent.
     Limit the character length of the tweet to 280 characters. No hashtags allowed. Do not ask follow up questions.`;
 
   const response = await fetch(
