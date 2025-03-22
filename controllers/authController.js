@@ -108,13 +108,13 @@ const verifySignature = async (req, res) => {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
-  const nonce = NONCE_STORE.get(publicKey);
+  const nonce = await NONCE_STORE.get(publicKey);
   if (!nonce) return res.status(400).json({ error: "Nonce not found" });
 
   const verified = nacl.sign.detached.verify(
     Buffer.from(nonce),
-    bs58.decode(signature),
-    bs58.decode(publicKey)
+    bs58.default.decode(signature),
+    bs58.default.decode(publicKey)
   );
 
   if (!verified) return res.status(401).json({ error: "Invalid signature" });
