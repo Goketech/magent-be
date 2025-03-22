@@ -1,4 +1,6 @@
 const postQueue = require("../shared/queue");
+const Transaction = require("../models/Transaction");
+const ContentHistory = require("../models/ContentHistory");
 
 const hostName = process.env.HOST_NAME;
 const serverPort = process.env.SERVER_PORT;
@@ -14,6 +16,7 @@ exports.schedulePost = async (req, res) => {
     maxInterval,
     duration,
     accessToken,
+    transactionId,
   } = req.body;
 
   if (
@@ -23,10 +26,31 @@ exports.schedulePost = async (req, res) => {
     !duration ||
     !accessToken ||
     !firstStyle ||
-    !secondStyle
+    !secondStyle ||
+    !transactionId
   ) {
     return res.status(400).json({ error: "Missing parameters" });
   }
+
+  // Verify transaction is successful
+  const transaction = await Transaction.findById(transactionId);
+  if (!transaction || transaction.transactionStatus !== "success") {
+    return res.status(400).json({ error: "Valid transaction required" });
+  }
+
+  // Verify the user owns this transaction
+  if (transaction.userId.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const contentHistory = new ContentHistory({
+    userId: req.user._id,
+    status: "running",
+    transactionId: transactionId,
+    scheduleId: `schedule_${Date.now()}_${req.user._id}`,
+  });
+
+  await contentHistory.save();
 
   const selectedTopic = Math.random() < 0.5 ? topic : secondTopic;
 
@@ -59,15 +83,11 @@ exports.schedulePost = async (req, res) => {
     });
   }
   let currentTime = startTime;
+  let postCount = 0;
 
   while (currentTime < endTime) {
     const delay =
-      Math.floor(
-        Math.random() * (maxInterval - minInterval + 1) + minInterval
-      ) *
-      60 *
-      60 *
-      1000; // Convert hours to milliseconds
+      Math.ceil(maxInterval - minInterval + 1 + minInterval) * 60 * 60 * 1000; // Convert hours to milliseconds
 
     currentTime += delay;
 
@@ -81,7 +101,7 @@ exports.schedulePost = async (req, res) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: input,
-            userId: "user",
+            userId: req.user._id.toString(),
             userName: "User",
           }),
         }
@@ -106,16 +126,30 @@ exports.schedulePost = async (req, res) => {
       if (data[0].text) {
         await postQueue.add(
           "twitter-post",
-          { text: data[0].text, accessToken },
+          {
+            text: data[0].text,
+            accessToken,
+            userId: req.user._id.toString(),
+            scheduleId: contentHistory.scheduleId,
+          },
           { delay }
         );
+
+        postCount++;
       }
     } catch (error) {
       console.error("Error generating AI content:", error);
     }
   }
 
-  res.json({ message: "Scheduled successfully" });
+  contentHistory.count = postCount;
+  await contentHistory.save();
+
+  res.json({
+    message: "Scheduled successfully",
+    scheduleId: contentHistory.scheduleId,
+    postCount,
+  });
 };
 
 exports.generatePost = async (req, res) => {
@@ -146,7 +180,7 @@ exports.generatePost = async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: input,
-        userId: "user",
+        userId: req.user._id.toString(),
         userName: "User",
       }),
     }
@@ -168,4 +202,59 @@ exports.generatePost = async (req, res) => {
   const data = JSON.parse(result);
   console.log("AI call data:", data);
   return res.json(data);
+};
+
+exports.cancelSchedule = async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+
+    if (!scheduleId) {
+      return res.status(400).json({ error: "Missing scheduleId parameter" });
+    }
+
+    const contentHistory = await ContentHistory.findOne({
+      scheduleId: scheduleId,
+      userId: req.user._id,
+    });
+
+    if (!contentHistory) {
+      return res.status(404).json({ error: "Schedule not found" });
+    }
+
+    // Update content history status
+    contentHistory.status = "cancelled";
+    await contentHistory.save();
+
+    // Get all pending jobs from the queue
+    const jobs = await postQueue.getJobs(["waiting", "delayed"]);
+
+    // Cancel all jobs associated with this schedule
+    for (const job of jobs) {
+      if (
+        job.data.scheduleId === scheduleId &&
+        job.data.userId === req.user._id.toString()
+      ) {
+        await job.remove();
+      }
+    }
+
+    res.json({ message: "Schedule cancelled successfully" });
+  } catch (error) {
+    console.error("Error cancelling schedule:", error);
+    res.status(500).json({ error: "Failed to cancel schedule" });
+  }
+};
+
+// Get user's content history
+exports.getContentHistory = async (req, res) => {
+  try {
+    const contentHistory = await ContentHistory.find({ userId: req.user._id })
+      .populate("transactionId")
+      .sort({ createdAt: -1 });
+
+    res.json(contentHistory);
+  } catch (error) {
+    console.error("Error fetching content history:", error);
+    res.status(500).json({ error: "Failed to fetch content history" });
+  }
 };

@@ -33,6 +33,7 @@ app.get("/workspace", (req, res) => {
 app.use("/auth", require("./routes/auth"));
 app.use("/api", require("./routes/api"));
 app.use("/twitter", require("./routes/twitter"));
+app.use("/transactions", require("./routes/transactions"));
 
 // Error handling
 app.use((err, req, res, next) => {
