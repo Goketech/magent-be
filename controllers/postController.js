@@ -153,9 +153,13 @@ exports.schedulePost = async (req, res) => {
 };
 
 exports.generatePost = async (req, res) => {
-  const { topic, secondTopic, firstStyle, secondStyle } = req.body;
+  const { topic, firstStyle, secondStyle } = req.body;
 
-  const selectedTopic = Math.random() < 0.5 ? topic : secondTopic;
+  if (!topic || !firstStyle || !secondStyle) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+
+  const selectedTopic = Math.random() < 0.5 ? topic[0] : topic[1];
 
   const input = `Generate a precise and engaging tweet on this topic: "${selectedTopic}". The tweet should blend the styles of "${firstStyle}" and "${secondStyle}" while strictly following the tone, structure, and approach of the provided sample posts. 
   The best marketing isn’t loud. It’s smart, subtle, and hits exactly where it needs to. 🎯 What’s your next smart move? 💡  
