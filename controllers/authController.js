@@ -102,20 +102,14 @@ const getNonce = async (req, res) => {
 };
 
 const verifySignature = async (req, res) => {
-  console.log("Verifying signature...");
   const { publicKey, signature } = req.body;
 
   if (!publicKey || !signature) {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
-  console.log("Public Key:", publicKey);
-  console.log("Signature:", signature);
-
   const nonce = await NONCE_STORE.get(publicKey);
   if (!nonce) return res.status(400).json({ error: "Nonce not found" });
-
-  console.log("Nonce:", nonce);
 
   const verified = nacl.sign.detached.verify(
     Buffer.from(nonce),
