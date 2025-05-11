@@ -34,6 +34,7 @@ app.use("/auth", require("./routes/auth"));
 app.use("/api", require("./routes/api"));
 app.use("/twitter", require("./routes/twitter"));
 app.use("/transactions", require("./routes/transactions"));
+app.use("/campaign", require("./routes/campaign"));
 
 // Error handling
 app.use((err, req, res, next) => {
