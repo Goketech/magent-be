@@ -3,7 +3,7 @@ const Transaction = require("../models/Transaction");
 
 exports.createCampaign = async (req, res) => {
   try {
-    const {
+    let {
       name,
       goals,
       kpi,
