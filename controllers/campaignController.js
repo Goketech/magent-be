@@ -28,30 +28,69 @@ exports.createCampaign = async (req, res) => {
       endDate,
     } = req.body;
 
+    const toLower = (val) =>
+      typeof val === "string" ? val.toLowerCase().trim() : val;
+
+    name = toLower(name);
+    goals = toLower(goals);
+    kpi = toLower(kpi);
+    industry = toLower(industry);
+    valuePerUser = toLower(valuePerUser);
+    website = toLower(website);
+    xAccount = toLower(xAccount);
+    youtube = toLower(youtube);
+    instagram = toLower(instagram);
+    telegram = toLower(telegram);
+    discord = toLower(discord);
+    otherSocials = toLower(otherSocials);
+    otherInfo = toLower(otherInfo);
+
+    // Normalize targetAudience.gender
+    if (targetAudience && typeof targetAudience.gender === "string") {
+      targetAudience.gender = toLower(targetAudience.gender);
+    }
+
     // Validate required fields
     if (
-      !name || !goals || !targetNumber || !targetAudience ||
-      !targetAudience.age || !targetAudience.gender || !industry ||
-      !valuePerUser || !valuePerUserAmount || !totalLiquidity ||
-      !website || !xAccount || !transactionId || !startDate || !endDate
+      !name ||
+      !goals ||
+      !targetNumber ||
+      !targetAudience ||
+      !targetAudience.age ||
+      !targetAudience.gender ||
+      !industry ||
+      !valuePerUser ||
+      !valuePerUserAmount ||
+      !totalLiquidity ||
+      !website ||
+      !xAccount ||
+      !transactionId ||
+      !startDate ||
+      !endDate
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // If goal is engagement, kpi is required
     if (goals === "engagement" && !kpi) {
-      return res.status(400).json({ error: "KPI is required for engagement campaigns" });
+      return res
+        .status(400)
+        .json({ error: "KPI is required for engagement campaigns" });
     }
 
     // Validate transaction
     const transaction = await Transaction.findById(transactionId);
 
     if (!transaction || transaction.transactionStatus !== "success") {
-      return res.status(400).json({ error: "Transaction is missing or not successful" });
+      return res
+        .status(400)
+        .json({ error: "Transaction is missing or not successful" });
     }
 
     if (transaction.amount !== totalLiquidity) {
-      return res.status(400).json({ error: "Transaction amount does not match total liquidity" });
+      return res
+        .status(400)
+        .json({ error: "Transaction amount does not match total liquidity" });
     }
 
     // Create campaign
@@ -134,21 +173,20 @@ exports.getUserCampaigns = async (req, res) => {
 };
 
 exports.getAllMarketplaceCampaigns = async (req, res) => {
-    try {
-      const campaigns = await Campaign.find({ status: "active" })
-        .select(
-          "name status publishers goals kpi targetNumber publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate"
-        )
-        .sort({ createdAt: -1 });
-  
-      res.status(200).json({
-        status: "success",
-        results: campaigns.length,
-        campaigns,
-      });
-    } catch (error) {
-      console.error("Error fetching campaigns:", error);
-      res.status(500).json({ error: "Failed to fetch campaigns" });
-    }
-  };
+  try {
+    const campaigns = await Campaign.find({ status: "active" })
+      .select(
+        "name status publishers goals kpi targetNumber publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate"
+      )
+      .sort({ createdAt: -1 });
 
+    res.status(200).json({
+      status: "success",
+      results: campaigns.length,
+      campaigns,
+    });
+  } catch (error) {
+    console.error("Error fetching campaigns:", error);
+    res.status(500).json({ error: "Failed to fetch campaigns" });
+  }
+};
