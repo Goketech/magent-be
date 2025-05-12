@@ -30,10 +30,10 @@ exports.createCampaign = async (req, res) => {
 
     // Validate required fields
     if (
-      !name || !goals || !targetNumber || !publishers || !targetAudience ||
+      !name || !goals || !targetNumber || !targetAudience ||
       !targetAudience.age || !targetAudience.gender || !industry ||
       !valuePerUser || !valuePerUserAmount || !totalLiquidity ||
-      !website || !xAccount || !media || !transactionId || !startDate || !endDate
+      !website || !xAccount || !transactionId || !startDate || !endDate
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
