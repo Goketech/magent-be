@@ -33,7 +33,7 @@ exports.createCampaign = async (req, res) => {
       !name || !goals || !targetNumber || !publishers || !targetAudience ||
       !targetAudience.age || !targetAudience.gender || !industry ||
       !valuePerUser || !valuePerUserAmount || !totalLiquidity ||
-      !website || !xAccount || !media || !transactionId
+      !website || !xAccount || !media || !transactionId || !startDate || !endDate
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
