@@ -46,7 +46,7 @@ exports.createCampaign = async (req, res) => {
     // Validate transaction
     const transaction = await Transaction.findById(transactionId);
 
-    if (!transaction || transaction.transactionStatus !== "successful") {
+    if (!transaction || transaction.transactionStatus !== "success") {
       return res.status(400).json({ error: "Transaction is missing or not successful" });
     }
 
