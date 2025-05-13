@@ -138,6 +138,17 @@ const campaignSchema = new mongoose.Schema({
     enum: ["pending", "completed", "inactive", "active"],
     default: "pending",
   },
+  publishers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  ],
+  publisherCount: {
+    type: Number,
+    default: 0,
+  },
   startDate: {
     type: Date,
     validate: {
