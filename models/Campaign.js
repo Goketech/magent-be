@@ -67,6 +67,14 @@ const campaignSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0,
+    validate: {
+      validator: function (val) {
+        return (
+          typeof this.totalLiquidity !== "number" || val <= this.totalLiquidity
+        );
+      },
+      message: "Value per user amount cannot be greater than total liquidity",
+    },
   },
   totalLiquidity: {
     type: Number,

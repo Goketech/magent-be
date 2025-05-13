@@ -77,6 +77,12 @@ exports.createCampaign = async (req, res) => {
         .json({ error: "KPI is required for engagement campaigns" });
     }
 
+    if (valuePerUserAmount > totalLiquidity) {
+      return res.status(400).json({
+        error: "Value per user amount cannot be greater than total liquidity",
+      });
+    }
+
     // Validate transaction
     const transaction = await Transaction.findById(transactionId);
 
