@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.2",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.3",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {

@@ -51,7 +51,14 @@ const userSchema = new mongoose.Schema({
       count: { type: Number, default: 0 },
       lastReset: { type: Date, default: Date.now }
     }
-  }
+  },
+  active: {
+    type: Boolean,
+    default: true
+  },
+  lastLogin: {
+    type: Date
+  },
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {
