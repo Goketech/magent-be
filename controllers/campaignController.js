@@ -98,6 +98,8 @@ exports.createCampaign = async (req, res) => {
         .json({ error: "Transaction amount does not match total liquidity" });
     }
 
+    kpi = kpi ? kpi : null;
+
     // Create campaign
     const campaign = new Campaign({
       name,

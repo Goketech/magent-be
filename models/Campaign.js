@@ -21,9 +21,9 @@ const campaignSchema = new mongoose.Schema({
   kpi: {
     type: String,
     enum: ["likes", "shares", "comments"],
-    // required: function () {
-    //   return this.goals === "engagement";
-    // },
+    required: function () {
+      return this.goals === "engagement";
+    },
   },
   targetNumber: {
     type: Number,
