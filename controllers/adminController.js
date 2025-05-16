@@ -6,6 +6,7 @@ const { sendEmail } = require('../utils/email');
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const Campaign = require('../models/Campaign');
+const ContentHistory = require('../models/ContentHistory');
 
 exports.sendInvite = async (req, res) => {
   const { email } = req.body;
