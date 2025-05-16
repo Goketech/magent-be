@@ -53,7 +53,7 @@ exports.fetchSuccessfulTransactions = async (req, res) => {
 };
 
 exports.countActiveUsers = async (req, res) => {
-  const count = await User.countDocuments({ active: true });
+  const count = await User.countDocuments();
   res.json({ activeUsers: count });
 };
 
@@ -77,4 +77,36 @@ exports.fetchCampaignTransactions = async (req, res) => {
   const { id } = req.params;
   const txs = await Transaction.find({ campaign: id }).lean().exec();
   res.json(txs);
+};
+
+exports.fetchAdminDashboardStats = async (req, res) => {
+  const [users, campaigns, txStats, postStats] = await Promise.all([
+    User.countDocuments(),
+    Campaign.countDocuments(),
+    Transaction.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]),
+    ContentHistory.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalPosts: { $sum: '$count' },
+          entries: { $sum: 1 }
+        }
+      }
+    ])
+  ]);
+
+  res.json({
+    users,
+    campaigns,
+    transactions: txStats[0] || { totalAmount: 0, count: 0 },
+    content: postStats[0] || { totalPosts: 0, entries: 0 }
+  });
 };

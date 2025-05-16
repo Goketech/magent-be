@@ -17,5 +17,6 @@ router.get('/campaigns', adminController.fetchAllCampaigns);
 router.get('/campaigns/pending', adminController.fetchPendingCampaigns);
 router.patch('/campaigns/:id/approve', adminController.approveCampaign);
 router.get('/campaigns/:id/transactions', adminController.fetchCampaignTransactions);
+router.get('/dashboard/stats', adminController.fetchAdminDashboardStats);
 
 module.exports = router;
