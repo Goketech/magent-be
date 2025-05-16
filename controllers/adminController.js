@@ -53,6 +53,22 @@ exports.fetchSuccessfulTransactions = async (req, res) => {
   res.json(stats[0] || { count: 0, totalAmount: 0 });
 };
 
+exports.fetchSuccessfulCampaignTransactions = async (req, res) => {
+  const stats = await Transaction.aggregate([
+    { $match: { transactionStatus: 'success', feature: 'campaign' } },
+    { $group: { _id: null, count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } }
+  ]);
+  res.json(stats[0] || { count: 0, totalAmount: 0 });
+};
+
+exports.fetchSuccessfulContentTransactions = async (req, res) => {
+  const stats = await Transaction.aggregate([
+    { $match: { transactionStatus: 'success', feature: 'sample_tweet' } },
+    { $group: { _id: null, count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } }
+  ]);
+  res.json(stats[0] || { count: 0, totalAmount: 0 });
+};
+
 exports.countActiveUsers = async (req, res) => {
   const count = await User.countDocuments();
   res.json({ activeUsers: count });
