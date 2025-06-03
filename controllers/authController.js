@@ -19,10 +19,14 @@ const generateToken = (id) => {
 
 const register = async (req, res) => {
   try {
-    const { businessName, email, password } = req.body;
+    const {  email, password, userName, role,  } = req.body;
 
     if (await User.findOne({ email })) {
       return res.status(400).json({ message: "Email already registered" });
+    }
+
+    if (await User.findOne({ businessName: userName })) {
+      return res.status(400).json({ message: "Username already registered" });
     }
 
     // Get free plan
@@ -32,7 +36,8 @@ const register = async (req, res) => {
     }
 
     const user = new User({
-      businessName,
+      businessName: userName,
+      accountType: role || "advertiser", // Default to advertiser if not provided
       email,
       password,
       plan: freePlan._id,
