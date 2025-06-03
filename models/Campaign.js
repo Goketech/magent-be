@@ -1,11 +1,22 @@
 const mongoose = require("mongoose");
 
+const PublisherSchema = new mongoose.Schema(
+  {
+    wallet: { type: String, required: true },
+    referralCode: { type: String, required: true, unique: true },
+    referralCount: { type: Number, default: 0 },
+    paidOut: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const campaignSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
     trim: true,
   },
+  campaignId: { type: Number, required: true, unique: true },
   goals: {
     type: String,
     enum: [
@@ -151,12 +162,14 @@ const campaignSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      default: [],
     },
   ],
   publisherCount: {
     type: Number,
     default: 0,
   },
+  spent: { type: Number, default: 0 },
   startDate: {
     type: Date,
     validate: {

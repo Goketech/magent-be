@@ -1,5 +1,14 @@
 const Campaign = require("../models/Campaign");
 const Transaction = require("../models/Transaction");
+const Verification = require("../services/verification.service");
+const SolanaService = require("../services/solana.service");
+
+/**
+ * Utility: Generate an 8‐character uppercase alphanumeric referral code.
+ */
+function generateReferralCode() {
+  return crypto.randomBytes(5).toString("hex").slice(0, 8).toUpperCase();
+}
 
 exports.createCampaign = async (req, res) => {
   try {
@@ -27,6 +36,27 @@ exports.createCampaign = async (req, res) => {
       endDate,
     } = req.body;
 
+    // Validate required fields
+    if (
+      !name ||
+      !goals ||
+      !targetNumber ||
+      !targetAudience ||
+      !targetAudience.age ||
+      !targetAudience.gender ||
+      !industry ||
+      !valuePerUser ||
+      !valuePerUserAmount ||
+      !totalLiquidity ||
+      !website ||
+      !xAccount ||
+      !transactionId ||
+      !startDate ||
+      !endDate
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
     const toLower = (val) =>
       typeof val === "string" ? val.toLowerCase().trim() : val;
 
@@ -49,27 +79,6 @@ exports.createCampaign = async (req, res) => {
       targetAudience.gender = toLower(targetAudience.gender);
     }
 
-    // Validate required fields
-    if (
-      !name ||
-      !goals ||
-      !targetNumber ||
-      !targetAudience ||
-      !targetAudience.age ||
-      !targetAudience.gender ||
-      !industry ||
-      !valuePerUser ||
-      !valuePerUserAmount ||
-      !totalLiquidity ||
-      !website ||
-      !xAccount ||
-      !transactionId ||
-      !startDate ||
-      !endDate
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
     // If goal is engagement, kpi is required
     if (goals === "engagement" && !kpi) {
       return res
@@ -77,9 +86,9 @@ exports.createCampaign = async (req, res) => {
         .json({ error: "KPI is required for engagement campaigns" });
     }
 
-    if (valuePerUserAmount > totalLiquidity) {
+    if (valuePerUserAmount * Number(targetNumber) > totalLiquidity) {
       return res.status(400).json({
-        error: "Value per user amount cannot be greater than total liquidity",
+        error: "Total Liquidity is not enough to fund the campaign",
       });
     }
 
@@ -98,13 +107,14 @@ exports.createCampaign = async (req, res) => {
         .json({ error: "Transaction amount does not match total liquidity" });
     }
 
-    kpi = kpi ? kpi : null;
+    // Generate a unique campaignId
+    const campaignId = Date.now();
 
     // Create campaign
     const campaign = new Campaign({
       name,
       goals,
-      kpi,
+      kpi: goals === "engagement" ? kpi : null,
       targetNumber,
       targetAudience,
       industry,
@@ -120,6 +130,7 @@ exports.createCampaign = async (req, res) => {
       otherSocials,
       otherInfo,
       media,
+      campaignId,
       userId: req.user._id,
       transactionId,
       startDate,
@@ -161,7 +172,13 @@ exports.updateCampaignStatus = async (req, res) => {
     campaign.status = status;
     await campaign.save();
 
-    res.json({ status: "success", campaign });
+    await SolanaService.initializeCampaignOnChain(
+      campaignId,
+      valuePerUserAmount,
+      targetNumber
+    );
+
+    return res.status(201).json({ status: "success", campaign });
   } catch (error) {
     console.error("Error updating campaign status:", error);
     res.status(500).json({ error: "Failed to update campaign status" });
@@ -180,7 +197,9 @@ exports.getUserCampaigns = async (req, res) => {
 
 exports.getAllMarketplaceCampaigns = async (req, res) => {
   try {
-    const campaigns = await Campaign.find({ status: { $in: ["active", "completed"] } })
+    const campaigns = await Campaign.find({
+      status: { $in: ["active", "completed"] },
+    })
       .select(
         "name status publishers goals kpi targetNumber targetAudience totalLiquidity publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate"
       )
@@ -194,5 +213,80 @@ exports.getAllMarketplaceCampaigns = async (req, res) => {
   } catch (error) {
     console.error("Error fetching campaigns:", error);
     res.status(500).json({ error: "Failed to fetch campaigns" });
+  }
+};
+
+/**
+ * Publisher joins a campaign:
+ *  - Check that campaign is active and not full.
+ *  - Generate a unique referralCode for this publisher.
+ *  - Save { wallet, referralCode, referralCount:0, paidOut:0 } into campaign.publishers.
+ *  - Return the referralCode and campaign details to the publisher.
+ */
+exports.joinCampaign = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { wallet } = req.body; // publisher’s Solana wallet (string)
+    if (!wallet) {
+      return res.status(400).json({ error: "Missing wallet" });
+    }
+
+    const campaign = await Campaign.findOne({ campaignId });
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+    if (campaign.status !== "active") {
+      return res.status(400).json({ error: "Cannot join this campaign" });
+    }
+
+    // Check if wallet already joined
+    let publisher = campaign.publishers.find((p) => p.wallet === wallet);
+    if (publisher) {
+      // Already joined: return existing referralCode
+      return res.json({
+        status:       "already_joined",
+        campaignId,
+        referralCode: publisher.referralCode,
+        campaignName: campaign.name,
+        goals:        campaign.goals,
+        valuePerUserAmount: campaign.valuePerUserAmount,
+        targetNumber: campaign.targetNumber,
+        publisherCount: campaign.publisherCount,
+        remainingBudget: campaign.totalLiquidity - campaign.spent,
+      });
+    }
+
+    // 1) Generate a unique referralCode
+    let referralCode = generateReferralCode();
+    // Ensure uniqueness within this campaign
+    while (campaign.publishers.some((p) => p.referralCode === referralCode)) {
+      referralCode = generateReferralCode();
+    }
+
+    // 2) Add publisher to campaign.publishers
+    publisher = {
+      wallet,
+      referralCode,
+      referralCount: 0,
+      paidOut:       0,
+    };
+    campaign.publishers.push(publisher);
+    await campaign.save();
+
+    // 3) Return the code + campaign summary
+    return res.status(201).json({
+      status:       "joined",
+      campaignId,
+      referralCode,
+      campaignName: campaign.name,
+      goals:        campaign.goals,
+      valuePerUserAmount: campaign.valuePerUserAmount,
+      targetNumber: campaign.targetNumber,
+      publisherCount: campaign.publisherCount,
+      remainingBudget: campaign.totalLiquidity - campaign.spent,
+    });
+  } catch (error) {
+    console.error("Error in joinCampaign:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
