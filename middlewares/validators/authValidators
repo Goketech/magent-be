@@ -40,13 +40,34 @@ const registerValidation = [
   validateBusinessName,
   validateEmail,
   validatePassword,
-  validateRole
-  // body("confirmPassword").custom((value, { req }) => {
-  //   if (value !== req.body.password) {
-  //     throw new Error("Passwords do not match");
-  //   }
-  //   return true;
-  // }),
+  validateRole,
+  body("industry").custom((value, { req }) => {
+    if (req.body.role === "advertiser" && !value) {
+      throw new Error("Industry is required for advertisers");
+    }
+    return true;
+  }),
+  body("expertise").custom((value, { req }) => {
+    if (req.body.role === "publisher" && !value) {
+      throw new Error("Expertise is required for publishers");
+    }
+    return true;
+  }),
+   body("businessName").custom((value, { req }) => {
+    if (req.body.role === "advertiser" && !value) {
+      throw new Error("Business Name is required for advertisers");
+    }
+    return true;
+  }),
+  body("businessName")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Business name must be between 2 and 100 characters")
+    .matches(/^[a-zA-Z0-9\s\-'.]+$/)
+    .withMessage(
+      "Business name can only contain letters, numbers, spaces, hyphens, apostrophes, and periods"
+    ),
 ];
 
 const loginValidation = [

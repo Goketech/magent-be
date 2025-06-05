@@ -19,13 +19,13 @@ const generateToken = (id) => {
 
 const register = async (req, res) => {
   try {
-    const {  email, password, userName, role,  } = req.body;
+    const {  email, password, userName, businessName, role, expertise, industry  } = req.body;
 
     if (await User.findOne({ email })) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    if (await User.findOne({ businessName: userName })) {
+    if (await User.findOne({ userName: userName })) {
       return res.status(400).json({ message: "Username already registered" });
     }
 
@@ -36,8 +36,11 @@ const register = async (req, res) => {
     }
 
     const user = new User({
-      businessName: userName,
-      accountType: role || "advertiser", // Default to advertiser if not provided
+      userName: userName,
+      businessName: businessName,
+      industry: industry,
+      expertise: expertise,
+      accountType: role,
       email,
       password,
       plan: freePlan._id,

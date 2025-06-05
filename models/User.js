@@ -5,8 +5,28 @@ const userSchema = new mongoose.Schema(
   {
     businessName: {
       type: String,
+      required: this.accountType === "advertiser",
+      // unique: true,
+      trim: true,
+    },
+    userName: {
+      type: String,
       required: true,
       unique: true,
+      trim: true,
+    },
+    industry: {
+      type: String,
+      required:function () {
+        return this.accountType === "advertiser";
+      },
+      trim: true,
+    },
+    expertise: {
+      type: String,
+      required:function () {
+        return this.accountType === "publisher";
+      },
       trim: true,
     },
     email: {
