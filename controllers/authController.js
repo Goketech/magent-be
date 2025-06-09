@@ -19,7 +19,15 @@ const generateToken = (id) => {
 
 const register = async (req, res) => {
   try {
-    const {  email, password, userName, businessName, role, expertise, industry  } = req.body;
+    const {
+      email,
+      password,
+      userName,
+      businessName,
+      role,
+      expertise,
+      industry,
+    } = req.body;
 
     if (await User.findOne({ email })) {
       return res.status(400).json({ message: "Email already registered" });
@@ -63,6 +71,11 @@ const login = async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { lastLogin: new Date() } }
+    );
 
     const token = generateToken(user._id);
     res.json({ token });
@@ -127,23 +140,19 @@ const verifySignature = async (req, res) => {
 
   if (!verified) return res.status(401).json({ error: "Invalid signature" });
 
-  let user = await User.findOne({ walletAddress: publicKey });
+  let user = await User.findOne({ _id: req.user._id });
 
   if (!user) {
-    const freePlan = await Plan.findOne({ name: "Free" });
-    if (!freePlan) {
-      return res.status(500).json({ message: "Default plan not found" });
-    }
-
-    user = new User({
-      walletAddress: publicKey,
-      email: publicKey,
-      plan: freePlan._id,
-      planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    });
-
-    await user.save();
+    return res.status(400).json({ error: "User not found" });
   }
+
+  User.updateOne(
+    { _id: user._id },
+    { $set: { lastLogin: new Date(), walletAddress: publicKey } }
+  ).catch((err) => {
+    console.error("Error updating last login:", err);
+    res.status(500).json({ message: "Login failed" });
+  });
 
   // Issue JWT
   const token = generateToken(user._id);

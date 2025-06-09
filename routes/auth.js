@@ -1,5 +1,4 @@
 const express = require("express");
-const router = express.Router();
 const {
   register,
   login,
@@ -14,6 +13,10 @@ const {
   googleAuthValidation,
   handleValidationErrors,
 } = require("../middlewares/validators/authValidators");
+const auth = require("../middlewares/auth");
+
+
+const router = express.Router();
 
 router.post(
   "/register",
@@ -29,8 +32,8 @@ router.post(
   handleValidationErrors,
   login
 );
-router.post("/get-nonce", getNonce);
-router.post("/verify-signature", verifySignature);
+router.post("/get-nonce", auth, getNonce);
+router.post("/verify-signature", auth, verifySignature);
 router.post(
   "/google",
   authLimiter,
