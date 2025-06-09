@@ -157,6 +157,10 @@ const campaignSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  totalResults: {
+    type: Number,
+    default: 0,
+  },
   startDate: {
     type: Date,
     validate: {
