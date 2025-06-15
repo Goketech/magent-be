@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.post("/schedule-post", globalLimiter, auth, schedulePostValidation, schedulePost);
 router.post("/sample-post", globalLimiter, auth, generatePostValidation, generatePost);
-router.post("/cancel-schedule", globalLimiter, auth, cancelSchedule);
-router.get("/content-history", globalLimiter, auth, cancelScheduleValidation, getContentHistory);
+router.post("/cancel-schedule", globalLimiter, auth, cancelScheduleValidation, cancelSchedule);
+router.get("/content-history", globalLimiter, auth, getContentHistory);
 
 module.exports = router;
