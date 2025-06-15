@@ -19,7 +19,12 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
+
+// Trust reverse proxy
+app.set("trust proxy", 1);
+
 app.use(globalLimiter);
 
 // Routes
