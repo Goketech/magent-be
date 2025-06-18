@@ -1,5 +1,6 @@
 const Campaign = require("../models/Campaign");
 const Transaction = require("../models/Transaction");
+const User = require("../models/User");
 
 exports.createCampaign = async (req, res) => {
   try {
@@ -68,6 +69,13 @@ exports.createCampaign = async (req, res) => {
       !endDate
     ) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const user = User.findById(req.user._id.toString());
+    if (!user.walletAddress) {
+      return res
+        .status(400)
+        .json({ error: "Connect a wallet to your account" });
     }
 
     // If goal is engagement, kpi is required
@@ -180,7 +188,9 @@ exports.getUserCampaigns = async (req, res) => {
 
 exports.getAllMarketplaceCampaigns = async (req, res) => {
   try {
-    const campaigns = await Campaign.find({ status: { $in: ["active", "completed"] } })
+    const campaigns = await Campaign.find({
+      status: { $in: ["active", "completed"] },
+    })
       .select(
         "name status publishers goals kpi targetNumber targetAudience totalLiquidity publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate totalResults publisherCount"
       )

@@ -79,6 +79,26 @@ const googleAuthValidation = [
   body("token").notEmpty().withMessage("Google token is required"),
 ];
 
+const requestPasswordResetValidation = [
+  validateEmail,
+];
+
+const validateNewPassword = body("newPassword")
+  .isLength({ min: 8 })
+  .withMessage("Password must be at least 8 characters long")
+  .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+  .withMessage(
+    "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+  );
+
+  const resetPasswordValidation = [
+  body("token")
+    .trim()
+    .notEmpty()
+    .withMessage("Reset token is required"),
+  validateNewPassword,
+];
+
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -97,5 +117,7 @@ module.exports = {
   registerValidation,
   loginValidation,
   googleAuthValidation,
+  resetPasswordValidation,
+  requestPasswordResetValidation,
   handleValidationErrors,
 };

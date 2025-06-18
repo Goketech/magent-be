@@ -5,12 +5,16 @@ const {
   googleAuth,
   getNonce,
   verifySignature,
+  requestPasswordReset,
+  resetPassword
 } = require("../controllers/authController");
 const { authLimiter } = require("../middlewares/rateLimit");
 const {
   registerValidation,
   loginValidation,
   googleAuthValidation,
+    resetPasswordValidation,
+  requestPasswordResetValidation,
   handleValidationErrors,
 } = require("../middlewares/validators/authValidators");
 const auth = require("../middlewares/auth");
@@ -32,6 +36,8 @@ router.post(
   handleValidationErrors,
   login
 );
+router.post("/request-password-reset", authLimiter,requestPasswordResetValidation, handleValidationErrors, requestPasswordReset);
+router.post("/reset-password", authLimiter, resetPasswordValidation, handleValidationErrors, resetPassword);
 router.post("/get-nonce", auth, getNonce);
 router.post("/verify-signature", auth, verifySignature);
 router.post(

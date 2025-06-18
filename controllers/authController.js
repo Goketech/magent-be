@@ -1,10 +1,12 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const nacl = require("tweetnacl");
 const bs58 = require("bs58");
 const Redis = require("ioredis");
 
 const User = require("../models/User");
 const Plan = require("../models/Plan");
+const { sendEmail } = require('../utils/email');
 
 const NONCE_STORE = new Redis({
   username: process.env.REDIS_USERNAME,
@@ -160,10 +162,102 @@ const verifySignature = async (req, res) => {
   res.json({ token });
 };
 
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    // don't reveal that email is unknown
+    console.log("checking here")
+    return res.status(200).json({ message: "If that email exists, a reset link has been sent." });
+  }
+
+  // generate a secure random token
+  const token = crypto.randomBytes(32).toString("hex");
+  const key = `pwd-reset:${token}`;
+
+  // store token → email, expire in 3600s (1 hr)
+  await NONCE_STORE.set(key, email, "EX", 60 * 60);
+
+  // build reset link
+  const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+
+  // send styled HTML email
+  const html = `
+    <div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#333;">
+      <!-- Banner -->
+      <div style="background:#ffffff;padding:20px 0;text-align:center;border-bottom:1px solid #eee;">
+        <img src="${process.env.COMPANY_LOGO_URL}" alt="Company Logo" style="height:50px;" />
+      </div>
+
+      <!-- Hero section -->
+      <div style="padding:40px 20px;text-align:center;background:#f9f9f9;">
+        <h1 style="margin-bottom:0.5em;font-size:24px;">Reset your password</h1>
+        <p style="margin:0;font-size:16px;">We received a request to reset the password for your account.</p>
+      </div>
+
+      <!-- Button -->
+      <div style="padding:30px 20px;text-align:center;">
+        <a
+          href="${resetUrl}"
+          style="display:inline-block;padding:12px 24px;font-size:16px;color:#fff;background:#330065;text-decoration:none;border-radius:4px;"
+        >Reset Password</a>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:20px 20px;font-size:12px;color:#888;text-align:center;border-top:1px solid #eee;">
+        <p>If you didn’t request a password reset, please ignore this email.</p>
+        <p>&copy; ${new Date().getFullYear()} Magent. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail(
+    email,
+    "Magent — Password Reset",
+    null,
+    html,
+  );
+
+  res.status(200).json({ message: "If that email exists, a reset link has been sent." });
+};
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Token and new password are required" });
+  }
+
+  const key = `pwd-reset:${token}`;
+  const email = await NONCE_STORE.get(key);
+  if (!email) {
+    return res.status(400).json({ message: "Invalid or expired token" });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    // should not happen, but just in case
+    return res.status(400).json({ message: "Invalid token" });
+  }
+
+  // update password (assuming your User model hashes on save)
+  user.password = newPassword;
+  await user.save();
+
+  // delete token so it can’t be reused
+  await NONCE_STORE.del(key);
+
+  res.status(200).json({ message: "Password successfully reset" });
+};
+
+
 module.exports = {
   register,
   login,
   getNonce,
   verifySignature,
   googleAuth,
+  requestPasswordReset,
+  resetPassword
 };
