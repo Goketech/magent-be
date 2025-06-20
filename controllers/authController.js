@@ -188,7 +188,7 @@ const requestPasswordReset = async (req, res) => {
     <div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#333;">
       <!-- Banner -->
       <div style="background:#ffffff;padding:20px 0;text-align:center;border-bottom:1px solid #eee;">
-        <img src="${process.env.COMPANY_LOGO_URL}" alt="Company Logo" style="height:50px;" />
+        <img src="${process.env.COMPANY_LOGO_URL}" alt="Magent Logo" style="height:50px;" />
       </div>
 
       <!-- Hero section -->
