@@ -41,8 +41,6 @@ const captachaValidation = body("captchaToken")
   .withMessage("Captcha token is required")
   .isString()
   .withMessage("Captcha token must be a string")
-  .isLength({ min: 20, max: 200 })
-  .withMessage("Captcha token must be between 20 and 200 characters");
 
 
 // Validation chains for different routes
