@@ -8,7 +8,7 @@ const {
   requestPasswordReset,
   resetPassword
 } = require("../controllers/authController");
-const { verifyRecaptcha } = require('../middleware/recaptcha');
+const { verifyRecaptcha } = require('../middlewares/recaptcha');
 const { authLimiter } = require("../middlewares/rateLimit");
 const {
   registerValidation,
