@@ -21,7 +21,7 @@ router.delete('/:formId', auth, deleteForm);
 
 // Public Access
 router.get('/public/:slug', getPublicForm);
-router.post('/public/:slug/submit', optionalAuth, submitForm);
+router.post('/public/:slug/submit', submitForm);
 
 // Form Management
 router.post('/:formId/publish', auth, publishForm);
