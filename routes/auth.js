@@ -8,6 +8,7 @@ const {
   requestPasswordReset,
   resetPassword
 } = require("../controllers/authController");
+const { verifyRecaptcha } = require('../middleware/recaptcha');
 const { authLimiter } = require("../middlewares/rateLimit");
 const {
   registerValidation,
@@ -25,6 +26,7 @@ const router = express.Router();
 router.post(
   "/register",
   // authLimiter,
+   verifyRecaptcha, 
   registerValidation,
   handleValidationErrors,
   register
@@ -32,6 +34,7 @@ router.post(
 router.post(
   "/login",
   authLimiter,
+   verifyRecaptcha, 
   loginValidation,
   handleValidationErrors,
   login

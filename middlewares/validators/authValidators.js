@@ -35,12 +35,23 @@ const validateBusinessName = body("userName")
     "User name can only contain letters, numbers, spaces, hyphens, apostrophes, and periods"
   );
 
+const captachaValidation = body("captchaToken")
+  .trim()
+  .notEmpty()
+  .withMessage("Captcha token is required")
+  .isString()
+  .withMessage("Captcha token must be a string")
+  .isLength({ min: 20, max: 200 })
+  .withMessage("Captcha token must be between 20 and 200 characters");
+
+
 // Validation chains for different routes
 const registerValidation = [
   validateBusinessName,
   validateEmail,
   validatePassword,
   validateRole,
+  captachaValidation,
   body("industry").custom((value, { req }) => {
     if (req.body.role === "advertiser" && !value) {
       throw new Error("Industry is required for advertisers");
@@ -72,6 +83,7 @@ const registerValidation = [
 
 const loginValidation = [
   validateEmail,
+  captachaValidation,
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
