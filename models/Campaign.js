@@ -157,6 +157,20 @@ const campaignSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  feedbackFormId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Form",
+  },
+  feedbackFormResponses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormResponse",
+    },
+  ],
+  feedbackFormResponseCount: {
+    type: Number,
+    default: 0,
+  },
   totalResults: {
     type: Number,
     default: 0,
