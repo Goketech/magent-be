@@ -192,7 +192,7 @@ exports.getAllMarketplaceCampaigns = async (req, res) => {
       status: { $in: ["active", "completed"] },
     })
       .select(
-        "name status publishers goals kpi targetNumber targetAudience totalLiquidity publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate totalResults publisherCount"
+        "name status publishers goals kpi targetNumber targetAudience totalLiquidity publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate totalResults publisherCount feedbackFormId"
       )
       .sort({ createdAt: -1 });
 
