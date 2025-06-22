@@ -3,10 +3,11 @@ const crypto = require("crypto");
 const nacl = require("tweetnacl");
 const bs58 = require("bs58");
 const Redis = require("ioredis");
+const { OAuth2Client } = require("google-auth-library");
 
 const User = require("../models/User");
 const Plan = require("../models/Plan");
-const { sendEmail } = require('../utils/email');
+const { sendEmail } = require("../utils/email");
 
 const NONCE_STORE = new Redis({
   username: process.env.REDIS_USERNAME,
@@ -14,6 +15,8 @@ const NONCE_STORE = new Redis({
   host: process.env.REDIS_HOST,
   port: process.env.REDIS_PORT,
 });
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -88,27 +91,129 @@ const login = async (req, res) => {
 
 const googleAuth = async (req, res) => {
   try {
-    const { token } = req.body; // Verify this token with Google OAuth2
-    // Implementation depends on your frontend setup
-    // You'll need to verify the token and extract user information
+    const { credential, isSignup = false, signupData = {} } = req.body;
 
-    let user = await User.findOne({ email: googleEmail });
+    if (!credential) {
+      return res.status(400).json({ message: "Google credential is required" });
+    }
+
+    // Verify the Google JWT token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      return res.status(400).json({ message: "Invalid Google token" });
+    }
+
+    const { email, name, picture, sub: googleId, email_verified } = payload;
+
+    if (!email_verified) {
+      return res.status(400).json({ message: "Google email not verified" });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({
+      $or: [{ email: email }, { googleId: googleId }],
+    });
+
+    let isNewUser = false;
 
     if (!user) {
+      // Check if this is a signup request
+      if (!isSignup) {
+        return res.status(404).json({
+          message: "No account found with this email. Please sign up first.",
+          shouldSignup: true,
+        });
+      }
+
+      // Validate required signup data
+      if (!signupData.role) {
+        return res.status(400).json({ message: "Role is required for signup" });
+      }
+
+      // Get free plan
       const freePlan = await Plan.findOne({ name: "Free" });
+      if (!freePlan) {
+        return res.status(500).json({ message: "Default plan not found" });
+      }
+
+      // Generate username from email if not provided
+      const baseUsername = email.split("@")[0];
+      let userName = baseUsername;
+      let counter = 1;
+
+      // Ensure username is unique
+      while (await User.findOne({ userName: userName })) {
+        userName = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      // Create new user
       user = new User({
-        businessName: googleName,
-        email: googleEmail,
+        userName: userName,
+        businessName:
+          signupData.role === "advertiser"
+            ? signupData.companyName || name
+            : name,
+        industry:
+          signupData.role === "advertiser" ? signupData.industry : undefined,
+        expertise:
+          signupData.role === "publisher" ? signupData.expertise : undefined,
+        accountType: signupData.role,
+        email: email,
         googleId: googleId,
+        profilePicture: picture,
+        isEmailVerified: true, // Google emails are pre-verified
         plan: freePlan._id,
-        planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
       });
+
+      await user.save();
+      isNewUser = true;
+    } else {
+      // Update existing user's Google ID if not set
+      if (!user.googleId) {
+        user.googleId = googleId;
+      }
+
+      // Update profile picture if available
+      if (picture && !user.profilePicture) {
+        user.profilePicture = picture;
+      }
+
+      // Update last login
+      user.lastLogin = new Date();
       await user.save();
     }
 
-    const jwtToken = generateToken(user._id);
-    res.json({ token: jwtToken });
+    // Generate JWT token
+    const token = generateToken(user._id);
+
+    // Return response
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.businessName || user.userName,
+        picture: user.profilePicture,
+        role: user.accountType,
+      },
+      isNewUser,
+    });
   } catch (error) {
+    console.error("Google authentication error:", error);
+
+    if (error.message && error.message.includes("Token used too early")) {
+      return res
+        .status(400)
+        .json({ message: "Invalid token timing. Please try again." });
+    }
+
     res.status(500).json({ message: "Google authentication failed" });
   }
 };
@@ -169,8 +274,10 @@ const requestPasswordReset = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) {
     // don't reveal that email is unknown
-    console.log("checking here")
-    return res.status(200).json({ message: "If that email exists, a reset link has been sent." });
+    console.log("checking here");
+    return res
+      .status(200)
+      .json({ message: "If that email exists, a reset link has been sent." });
   }
 
   // generate a secure random token
@@ -188,7 +295,9 @@ const requestPasswordReset = async (req, res) => {
     <div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#333;">
       <!-- Banner -->
       <div style="background:#ffffff;padding:20px 0;text-align:center;border-bottom:1px solid #eee;">
-        <img src="${process.env.COMPANY_LOGO_URL}" alt="Magent Logo" style="height:50px;" />
+        <img src="${
+          process.env.COMPANY_LOGO_URL
+        }" alt="Magent Logo" style="height:50px;" />
       </div>
 
       <!-- Hero section -->
@@ -213,20 +322,19 @@ const requestPasswordReset = async (req, res) => {
     </div>
   `;
 
-  await sendEmail(
-    email,
-    "Magent — Password Reset",
-    null,
-    html,
-  );
+  await sendEmail(email, "Magent — Password Reset", null, html);
 
-  res.status(200).json({ message: "If that email exists, a reset link has been sent." });
+  res
+    .status(200)
+    .json({ message: "If that email exists, a reset link has been sent." });
 };
 
 const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) {
-    return res.status(400).json({ message: "Token and new password are required" });
+    return res
+      .status(400)
+      .json({ message: "Token and new password are required" });
   }
 
   const key = `pwd-reset:${token}`;
@@ -251,7 +359,6 @@ const resetPassword = async (req, res) => {
   res.status(200).json({ message: "Password successfully reset" });
 };
 
-
 module.exports = {
   register,
   login,
@@ -259,5 +366,5 @@ module.exports = {
   verifySignature,
   googleAuth,
   requestPasswordReset,
-  resetPassword
+  resetPassword,
 };
