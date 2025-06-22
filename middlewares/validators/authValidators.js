@@ -86,7 +86,7 @@ const loginValidation = [
 ];
 
 const googleAuthValidation = [
-  body("token").notEmpty().withMessage("Google token is required"),
+  body("credential").notEmpty().withMessage("Google token is required"),
 ];
 
 const requestPasswordResetValidation = [
