@@ -497,9 +497,10 @@ const validateFormData = (fields, data) => {
 
   fields.forEach((field) => {
     const fieldValue = data[field.id];
-
+    console.log("Validating field:", field.id, fieldValue);
     // Check required fields
     if (field.required && (!fieldValue || fieldValue === "")) {
+      console.log("Field is required:", field.id, fieldValue);
       isValid = false;
       errors.push({
         field: field.id,
