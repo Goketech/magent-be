@@ -109,6 +109,10 @@ const validateNewPassword = body("newPassword")
   validateNewPassword,
 ];
 
+const validateNewsLetterEmail = [
+  validateEmail,
+]
+
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -129,5 +133,6 @@ module.exports = {
   googleAuthValidation,
   resetPasswordValidation,
   requestPasswordResetValidation,
+  validateNewsLetterEmail,
   handleValidationErrors,
 };

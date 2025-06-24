@@ -42,6 +42,7 @@ app.use("/transactions", require("./routes/transactions"));
 app.use("/campaign", require("./routes/campaign"));
 app.use("/admin", require("./routes/admin"));
 app.use("/form", require("./routes/form"));
+app.use("/newsletter", require("./routes/newsletter"));
 
 // Error handling
 app.use((err, req, res, next) => {
