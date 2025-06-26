@@ -161,6 +161,11 @@ const campaignSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Form",
   },
+  feedbackFormUrl: {
+    type: String,
+    trim: true,
+    required: false,
+  },
   feedbackFormResponses: [
     {
       type: mongoose.Schema.Types.ObjectId,

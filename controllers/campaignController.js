@@ -1,6 +1,7 @@
 const Campaign = require("../models/Campaign");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
+const Form = require("../models/Form");
 
 exports.createCampaign = async (req, res) => {
   try {
@@ -179,6 +180,13 @@ exports.updateCampaignStatus = async (req, res) => {
 exports.getUserCampaigns = async (req, res) => {
   try {
     const campaigns = await Campaign.find({ userId: req.user._id });
+    for (let campaign of campaigns) {
+      const form = await Form.findOne({ _id: campaign.feedbackFormId }).lean();
+      if (form) {
+        const formUrl = `${process.env.APP_URL}/forms/public/${form.publicShareLink}`;
+        campaign.feedbackFormUrl = formUrl;
+      }
+    }
     res.json(campaigns);
   } catch (error) {
     console.error("Error fetching campaigns:", error);
@@ -195,6 +203,14 @@ exports.getAllMarketplaceCampaigns = async (req, res) => {
         "name status publishers goals kpi targetNumber targetAudience totalLiquidity publishers valuePerUser valuePerUserAmount industry website xAccount media startDate endDate totalResults publisherCount feedbackFormId"
       )
       .sort({ createdAt: -1 });
+
+    for (let campaign of campaigns) {
+      const form = await Form.findOne({ _id: campaign.feedbackFormId }).lean();
+      if (form) {
+        const formUrl = `${process.env.APP_URL}/forms/public/${form.publicShareLink}`;
+        campaign.feedbackFormUrl = formUrl;
+      }
+    }
 
     res.status(200).json({
       status: "success",
