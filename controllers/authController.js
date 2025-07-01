@@ -62,7 +62,17 @@ const register = async (req, res) => {
     await user.save();
     const token = generateToken(user._id);
 
-    res.status(201).json({ token });
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.businessName || user.userName,
+        picture: user.profilePicture,
+        role: user.accountType,
+        walletAddress: user.walletAddress || null,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Registration failed" });
   }
@@ -83,7 +93,17 @@ const login = async (req, res) => {
     );
 
     const token = generateToken(user._id);
-    res.json({ token });
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.businessName || user.userName,
+        picture: user.profilePicture,
+        role: user.accountType,
+        walletAddress: user.walletAddress || null,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
   }
