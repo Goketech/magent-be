@@ -1,5 +1,15 @@
 const mongoose = require("mongoose");
 
+const publisherSchema = new mongoose.Schema(
+  {
+    wallet: { type: String, required: true },
+    referralCode: { type: String, required: true, unique: true },
+    referralCount: { type: Number, default: 0 },
+    paidOut: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const campaignSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -148,15 +158,15 @@ const campaignSchema = new mongoose.Schema({
   },
   publishers: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+     type: [publisherSchema],
+      default: [],
     },
   ],
   publisherCount: {
     type: Number,
     default: 0,
   },
+  spent: { type: Number, default: 0 },
   feedbackFormId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Form",

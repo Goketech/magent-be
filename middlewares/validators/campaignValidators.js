@@ -162,7 +162,33 @@ const updateCampaignStatusValidation = [
   },
 ];
 
+const joinCampaignValidation = [
+  param("campaignId")
+    .notEmpty()
+    .withMessage("Campaign ID is required")
+    .isMongoId()
+    .withMessage("Invalid campaign ID"),
+
+  body("wallet")
+    .notEmpty()
+    .withMessage("Wallet address is required")
+    .isString()
+    .withMessage("Wallet must be a string"),
+
+  body("email").optional().isEmail().withMessage("Invalid email format"),
+
+  body("xAccount")
+    .optional()
+    .isString()
+    .withMessage("X/Twitter account must be a string"),
+  body("youtube").optional().isURL().withMessage("Invalid YouTube URL"),
+  body("instagram").optional().isURL().withMessage("Invalid Instagram URL"),
+  body("telegram").optional().isURL().withMessage("Invalid Telegram URL"),
+  body("discord").optional().isURL().withMessage("Invalid Discord URL"),
+];
+
 module.exports = {
   createCampaignValidation,
   updateCampaignStatusValidation,
+  joinCampaignValidation,
 };

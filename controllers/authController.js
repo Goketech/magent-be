@@ -250,41 +250,43 @@ const getNonce = async (req, res) => {
 };
 
 const verifySignature = async (req, res) => {
-  const { publicKey, signature } = req.body;
+  try {
+    const { publicKey, signature } = req.body;
 
-  if (!publicKey || !signature) {
-    return res.status(400).json({ error: "Missing parameters" });
+    if (!publicKey || !signature) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+
+    const nonce = await NONCE_STORE.get(publicKey);
+    if (!nonce) return res.status(400).json({ error: "Nonce not found" });
+
+    const verified = nacl.sign.detached.verify(
+      Buffer.from(nonce),
+      bs58.default.decode(signature),
+      bs58.default.decode(publicKey)
+    );
+
+    if (!verified) return res.status(401).json({ error: "Invalid signature" });
+
+    let user = await User.findOne({ _id: req.user._id });
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { lastLogin: new Date(), walletAddress: publicKey } }
+    );
+
+    // Issue JWT
+    const token = generateToken(user._id);
+
+    res.json({ token });
+  } catch (error) {
+    console.error("Error in verifySignature:", error);
+    return res.status(500).json({ error: "Failed to login" });
   }
-
-  const nonce = await NONCE_STORE.get(publicKey);
-  if (!nonce) return res.status(400).json({ error: "Nonce not found" });
-
-  const verified = nacl.sign.detached.verify(
-    Buffer.from(nonce),
-    bs58.default.decode(signature),
-    bs58.default.decode(publicKey)
-  );
-
-  if (!verified) return res.status(401).json({ error: "Invalid signature" });
-
-  let user = await User.findOne({ _id: req.user._id });
-
-  if (!user) {
-    return res.status(400).json({ error: "User not found" });
-  }
-
-  User.updateOne(
-    { _id: user._id },
-    { $set: { lastLogin: new Date(), walletAddress: publicKey } }
-  ).catch((err) => {
-    console.error("Error updating last login:", err);
-    res.status(500).json({ message: "Login failed" });
-  });
-
-  // Issue JWT
-  const token = generateToken(user._id);
-
-  res.json({ token });
 };
 
 const requestPasswordReset = async (req, res) => {

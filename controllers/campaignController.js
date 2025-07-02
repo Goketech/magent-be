@@ -3,6 +3,10 @@ const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Form = require("../models/Form");
 
+function generateReferralCode() {
+  return crypto.randomBytes(5).toString("hex").slice(0, 8).toUpperCase();
+}
+
 exports.createCampaign = async (req, res) => {
   try {
     let {
@@ -220,5 +224,89 @@ exports.getAllMarketplaceCampaigns = async (req, res) => {
   } catch (error) {
     console.error("Error fetching campaigns:", error);
     res.status(500).json({ error: "Failed to fetch campaigns" });
+  }
+};
+
+exports.joinCampaign = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { wallet, email, xAccount, youtube, instagram, telegram, discord } =
+      req.body;
+    if (!wallet) {
+      return res.status(400).json({ error: "Missing wallet" });
+    }
+
+    const user = await User.findById(req.user._id);
+    const userPublisher = await User.findOne({ walletAddress: wallet, email });
+    if (!userPublisher || !user) {
+      return res.status(404).json({ error: "Publisher not found" });
+    }
+    if (userPublisher._id.toString() !== user._id.toString()) {
+      return res.status(403).json({ error: "Invalid User" });
+    }
+
+    const campaign = await Campaign.findOne({ campaignId });
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+    if (campaign.status !== "active") {
+      return res.status(400).json({ error: "Cannot join this campaign" });
+    }
+    if (campaign.endDate < new Date()) {
+      return res.status(400).json({ error: "Campaign has ended" });
+    }
+    if (campaign.totalResults >= campaign.targetNumber) {
+      return res.status(400).json({ error: "Campaign target reached" });
+    }
+
+    // Check if wallet already joined
+    let publisher = campaign.publishers.find((p) => p.wallet === wallet);
+    if (publisher) {
+      // Already joined: return existing referralCode
+      return res.json({
+        status: "already_joined",
+        campaignId,
+        referralCode: publisher.referralCode,
+        campaignName: campaign.name,
+        goals: campaign.goals,
+        valuePerUserAmount: campaign.valuePerUserAmount,
+        targetNumber: campaign.targetNumber,
+        publisherCount: campaign.publisherCount,
+        remainingBudget: campaign.totalLiquidity - campaign.spent,
+      });
+    }
+
+    // 1) Generate a unique referralCode
+    let referralCode = generateReferralCode();
+    // Ensure uniqueness within this campaign
+    while (campaign.publishers.some((p) => p.referralCode === referralCode)) {
+      referralCode = generateReferralCode();
+    }
+
+    // 2) Add publisher to campaign.publishers
+    publisher = {
+      wallet,
+      referralCode,
+      referralCount: 0,
+      paidOut: 0,
+    };
+    campaign.publishers.push(publisher);
+    await campaign.save();
+
+    // 3) Return the code + campaign summary
+    return res.status(201).json({
+      status: "joined",
+      campaignId,
+      referralCode,
+      campaignName: campaign.name,
+      goals: campaign.goals,
+      valuePerUserAmount: campaign.valuePerUserAmount,
+      targetNumber: campaign.targetNumber,
+      publisherCount: campaign.publisherCount,
+      remainingBudget: campaign.totalLiquidity - campaign.spent,
+    });
+  } catch (error) {
+    console.error("Error in joinCampaign:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
