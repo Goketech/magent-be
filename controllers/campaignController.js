@@ -245,7 +245,7 @@ exports.joinCampaign = async (req, res) => {
       return res.status(403).json({ error: "Invalid User" });
     }
 
-    const campaign = await Campaign.findOne({ campaignId });
+    const campaign = await Campaign.findOne({ _id: campaignId });
     if (!campaign) {
       return res.status(404).json({ error: "Campaign not found" });
     }
