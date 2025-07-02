@@ -1,15 +1,8 @@
 const { Queue, Worker } = require("bullmq");
-const Redis = require("ioredis");
+const redis = require('../utils/redis');
+const ContentHistory = require("../models/ContentHistory");
 
-const redisConnection = new Redis({
-  username: process.env.REDIS_USERNAME,
-  password: process.env.REDIS_PASSWORD,
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  maxRetriesPerRequest: null,
-});
-
-const postQueue = new Queue("twitter-posts", { connection: redisConnection });
+const postQueue = new Queue("twitter-posts", { connection: redis });
 
 const worker = new Worker(
   "twitter-posts",
@@ -47,7 +40,7 @@ const worker = new Worker(
 
     return responseData;
   },
-  { connection: redisConnection }
+  { connection: redis }
 );
 
 worker.on("completed", async (job) => {

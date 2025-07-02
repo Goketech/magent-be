@@ -1,16 +1,10 @@
 const { Queue, Worker } = require('bullmq');
 const Campaign = require('../models/Campaign');
-
-// Redis connection configuration
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-};
+const redis = require('../utils/redis');
 
 // Create the queue
 const campaignExpiryQueue = new Queue('campaign-expiry', {
-  connection: redisConfig,
+  connection: redis,
 });
 
 // Job processor function
@@ -70,7 +64,7 @@ const processCampaignExpiry = async (job) => {
 
 // Create the worker
 const campaignExpiryWorker = new Worker('campaign-expiry', processCampaignExpiry, {
-  connection: redisConfig,
+  connection: redis,
   concurrency: 1, // Process one job at a time
 });
 

@@ -2,19 +2,12 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nacl = require("tweetnacl");
 const bs58 = require("bs58");
-const Redis = require("ioredis");
 const { OAuth2Client } = require("google-auth-library");
 
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const { sendEmail } = require("../utils/email");
-
-const NONCE_STORE = new Redis({
-  username: process.env.REDIS_USERNAME,
-  password: process.env.REDIS_PASSWORD,
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-});
+const redis = require('../utils/redis');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -244,7 +237,7 @@ const getNonce = async (req, res) => {
     return res.status(400).json({ error: "Public key is required" });
 
   const nonce = Math.random().toString(36).substring(2);
-  NONCE_STORE.set(publicKey, nonce);
+  redis.set(publicKey, nonce);
 
   res.json({ nonce });
 };
@@ -257,7 +250,7 @@ const verifySignature = async (req, res) => {
       return res.status(400).json({ error: "Missing parameters" });
     }
 
-    const nonce = await NONCE_STORE.get(publicKey);
+    const nonce = await redis.get(publicKey);
     if (!nonce) return res.status(400).json({ error: "Nonce not found" });
 
     const verified = nacl.sign.detached.verify(
@@ -307,7 +300,7 @@ const requestPasswordReset = async (req, res) => {
   const key = `pwd-reset:${token}`;
 
   // store token → email, expire in 3600s (1 hr)
-  await NONCE_STORE.set(key, email, "EX", 60 * 60);
+  await redis.set(key, email, "EX", 60 * 60);
 
   // build reset link
   const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
@@ -360,7 +353,7 @@ const resetPassword = async (req, res) => {
   }
 
   const key = `pwd-reset:${token}`;
-  const email = await NONCE_STORE.get(key);
+  const email = await redis.get(key);
   if (!email) {
     return res.status(400).json({ message: "Invalid or expired token" });
   }
@@ -376,7 +369,7 @@ const resetPassword = async (req, res) => {
   await user.save();
 
   // delete token so it can’t be reused
-  await NONCE_STORE.del(key);
+  await redis.del(key);
 
   res.status(200).json({ message: "Password successfully reset" });
 };
