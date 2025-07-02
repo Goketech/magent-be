@@ -64,7 +64,7 @@ const register = async (req, res) => {
         picture: user.profilePicture,
         role: user.accountType,
         walletAddress: user.walletAddress || null,
-        publisherCampaigns: user.publisherCampaigns || {},
+        publisherCampaigns: user.publisherCampaigns,
       },
     });
   } catch (error) {
@@ -96,7 +96,7 @@ const login = async (req, res) => {
         picture: user.profilePicture,
         role: user.accountType,
         walletAddress: user.walletAddress || null,
-        publisherCampaigns: user.publisherCampaigns || {},
+        publisherCampaigns: user.publisherCampaigns,
       },
     });
   } catch (error) {
@@ -218,7 +218,7 @@ const googleAuth = async (req, res) => {
         picture: user.profilePicture,
         role: user.accountType,
         walletAddress: user.walletAddress || null,
-        publisherCampaigns: user.publisherCampaigns || {},
+        publisherCampaigns: user.publisherCampaigns,
       },
       isNewUser,
     });

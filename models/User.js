@@ -17,14 +17,14 @@ const userSchema = new mongoose.Schema(
     },
     industry: {
       type: String,
-      required:function () {
+      required: function () {
         return this.accountType === "advertiser";
       },
       trim: true,
     },
     expertise: {
       type: String,
-      required:function () {
+      required: function () {
         return this.accountType === "publisher";
       },
       trim: true,
@@ -86,22 +86,25 @@ const userSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
-    publisherCampaigns: [
-      {
-        campaignId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Campaign",
-          required: true,
+    publisherCampaigns: {
+      type: [
+        {
+          campaignId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Campaign",
+            required: true,
+          },
+          referralCode: {
+            type: String,
+          },
+          joinedAt: {
+            type: Date,
+            default: Date.now,
+          },
         },
-        referralCode: {
-          type: String,
-        },
-        joinedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      }
-    ]
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );
@@ -117,16 +120,10 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.virtual('advertiserCampaigns', {
-  ref: 'Campaign',
-  localField: '_id',
-  foreignField: 'userId',
-});
-
-userSchema.virtual('publisherCampaigns', {
-  ref: 'Campaign',
-  localField: 'walletAddress',
-  foreignField: 'publishers.wallet',
+userSchema.virtual("advertiserCampaigns", {
+  ref: "Campaign",
+  localField: "_id",
+  foreignField: "userId",
 });
 
 const User = mongoose.model("User", userSchema);
