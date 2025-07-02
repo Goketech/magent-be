@@ -7,7 +7,7 @@ const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const { sendEmail } = require("../utils/email");
-const redis = require('../utils/redis');
+const redis = require("../utils/redis");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -272,10 +272,7 @@ const verifySignature = async (req, res) => {
       { $set: { lastLogin: new Date(), walletAddress: publicKey } }
     );
 
-    // Issue JWT
-    const token = generateToken(user._id);
-
-    res.json({ token });
+    res.json({ token: publicKey });
   } catch (error) {
     console.error("Error in verifySignature:", error);
     return res.status(500).json({ error: "Failed to connect wallet" });
