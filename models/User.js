@@ -86,6 +86,22 @@ const userSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
+    publisherCampaigns: [
+      {
+        campaignId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Campaign",
+          required: true,
+        },
+        referralCode: {
+          type: String,
+        },
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      }
+    ]
   },
   { timestamps: true }
 );
