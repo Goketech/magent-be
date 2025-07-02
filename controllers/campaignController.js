@@ -2,6 +2,7 @@ const Campaign = require("../models/Campaign");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Form = require("../models/Form");
+const crypto = require("crypto");
 
 function generateReferralCode() {
   return crypto.randomBytes(5).toString("hex").slice(0, 8).toUpperCase();
