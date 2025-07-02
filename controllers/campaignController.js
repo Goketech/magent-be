@@ -294,6 +294,19 @@ exports.joinCampaign = async (req, res) => {
     campaign.publishers.push(publisher);
     await campaign.save();
 
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $push: {
+          publisherCampaigns: {
+            campaignId: campaign._id,
+            referralCode,
+            joinedAt: new Date(),
+          },
+        },
+      }
+    );
+
     // 3) Return the code + campaign summary
     return res.status(201).json({
       status: "joined",
