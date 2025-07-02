@@ -278,7 +278,7 @@ const verifySignature = async (req, res) => {
     res.json({ token });
   } catch (error) {
     console.error("Error in verifySignature:", error);
-    return res.status(500).json({ error: "Failed to login" });
+    return res.status(500).json({ error: "Failed to connect wallet" });
   }
 };
 
