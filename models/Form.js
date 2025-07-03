@@ -82,6 +82,7 @@ const formSchema = new mongoose.Schema(
     },
     fields: [
       {
+        _id: { type: String },
         type: {
           type: String,
           enum: [

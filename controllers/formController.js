@@ -42,7 +42,7 @@ const createForm = async (req, res) => {
       createdBy: userId,
       fields: fields.map((field, index) => ({
         ...field,
-        id: generateUUID(),
+        _id: generateUUID(),
         order: index,
       })),
       status: "draft",
