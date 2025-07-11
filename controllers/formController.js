@@ -251,7 +251,7 @@ const submitForm = async (req, res) => {
 
     const campaign = await Campaign.findOne({
       _id: form.campaignId,
-      isActive: true,
+      status: "active",
     });
 
     if (!campaign) {
