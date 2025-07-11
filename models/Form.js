@@ -92,6 +92,7 @@ const formSchema = new mongoose.Schema(
             "select",
             "checkbox",
             "radio",
+            "date",
             "textarea",
           ],
           required: true,
