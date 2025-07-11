@@ -254,6 +254,11 @@ const verifySignature = async (req, res) => {
       return res.status(400).json({ error: "Missing parameters" });
     }
 
+    const walletInUse = await User.findOne({ walletAddress: publicKey });
+    if (walletInUse) {
+      return res.status(400).json({ error: "Wallet address already in use" });
+    }
+
     const nonce = await redis.get(publicKey);
     if (!nonce) return res.status(400).json({ error: "Nonce not found" });
 
