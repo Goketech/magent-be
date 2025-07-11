@@ -237,7 +237,7 @@ const publishForm = async (req, res) => {
 const submitForm = async (req, res) => {
   try {
     const { slug } = req.params;
-    const submissionData = req.body;
+    const { submissionData, referralCode } = req.body;
 
     const form = await Form.findOne({
       publicShareLink: slug,
@@ -248,6 +248,31 @@ const submitForm = async (req, res) => {
     if (!form) {
       return res.status(404).json({ error: "Form not found" });
     }
+
+    const campaign = await Campaign.findOne({
+      _id: form.campaignId,
+      isActive: true,
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found or inactive" });
+    }
+
+    // check if referralCode is in campaign
+    campaign.publishers.filter((publisher) => {
+      if (publisher.referralCode === referralCode) {
+        // Increment publisher's referral count
+        publisher.referralCount = (publisher.referralCount || 0) + 1;
+        return true;
+      }
+      // log to track if referralcode is not found
+      // this shouldn't happen, but would help track issues
+      console.warn(
+        "Referral code not found in campaign publishers:",
+        referralCode
+      );
+      return false;
+    });
 
     // Check if form has expired
     if (form.settings.expiresAt && new Date() > form.settings.expiresAt) {
