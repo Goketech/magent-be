@@ -233,13 +233,14 @@ exports.joinCampaign = async (req, res) => {
     const { campaignId } = req.params;
     const { wallet, email, xAccount, youtube, instagram, telegram, discord } =
       req.body;
-    if (!wallet) {
-      return res.status(400).json({ error: "Missing wallet" });
+    if (!wallet || !email) {
+      return res.status(400).json({ error: "Missing wallet or email" });
     }
 
     const user = await User.findById(req.user._id);
     const userPublisher = await User.findOne({ walletAddress: wallet, email });
     if (!userPublisher || !user) {
+      console.log("User or publisher not found", userPublisher, user);
       return res.status(404).json({ error: "Publisher not found" });
     }
     if (userPublisher._id.toString() !== user._id.toString()) {
