@@ -34,6 +34,7 @@ app.use(
       "https://www.hellomagent.com",
       "https://hellomagent.com",
       "http://localhost:3000",
+      "http://localhost:8771",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
