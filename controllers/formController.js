@@ -255,6 +255,7 @@ const submitForm = async (req, res) => {
     });
 
     if (!campaign) {
+      console.log("Campaign not found or inactive:", form.campaignId);
       return res.status(404).json({ error: "Campaign not found or inactive" });
     }
 
