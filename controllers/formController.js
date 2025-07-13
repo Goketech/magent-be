@@ -174,7 +174,7 @@ const getPublicForm = async (req, res) => {
       publicShareLink: slug,
       status: "published",
       isPublic: true,
-    }).select("-createdBy -campaignId -updatedAt -__v");
+    });
 
     if (!form) {
       return res.status(404).json({ error: "Form not found or not public" });
