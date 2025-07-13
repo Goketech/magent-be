@@ -331,7 +331,7 @@ const submitForm = async (req, res) => {
       userAgent: req.get("User-Agent"),
       data: submissionData,
       status: "completed",
-      walletAddress: wallet || null,
+      ...(wallet && { walletAddress: wallet }),
     });
 
     await submission.save();
