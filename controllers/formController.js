@@ -309,15 +309,18 @@ const submitForm = async (req, res) => {
       });
     }
 
-    const walletUsed = await FormResponse.findOne({
-      walletAddress: wallet,
-      formId: form._id,
-    });
-
-    if (walletUsed) {
-      return res.status(400).json({
-        error: "Wallet address has already submitted this form",
+    // Only check for wallet duplication if wallet is provided
+    if (wallet) {
+      const walletUsed = await FormResponse.findOne({
+        walletAddress: wallet,
+        formId: form._id,
       });
+
+      if (walletUsed) {
+        return res.status(400).json({
+          error: "Wallet address has already submitted this form",
+        });
+      }
     }
 
     const submission = new FormResponse({
