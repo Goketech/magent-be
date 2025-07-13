@@ -185,6 +185,16 @@ const getPublicForm = async (req, res) => {
       return res.status(410).json({ error: "Form has expired" });
     }
 
+    // Check if campaign is active
+    const campaign = await Campaign.findOne({
+      _id: form.campaignId,
+      status: "active",
+    });
+    if (!campaign) {
+      console.log("Campaign not found or inactive:", form.campaignId);
+      return res.status(404).json({ error: "Campaign not found or inactive" });
+    }
+
     // Check submission limit
     if (
       form.settings.submissionLimit > 0 &&
