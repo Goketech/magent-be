@@ -23,6 +23,12 @@ const formResponseSchema = new mongoose.Schema(
       type: String,
       enum: ["completed", "partial"],
     },
+    walletAddress: {
+      type: String,
+      required: false, // Optional field for wallet address
+      unique: true,
+      sparse: true,
+    },
     data: {
       type: Object, // This will store the form responses as key-value pairs
       required: true,

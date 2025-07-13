@@ -237,7 +237,7 @@ const publishForm = async (req, res) => {
 const submitForm = async (req, res) => {
   try {
     const { slug } = req.params;
-    const { submissionData, referralCode } = req.body;
+    const { submissionData, referralCode, wallet } = req.body;
 
     const form = await Form.findOne({
       publicShareLink: slug,
@@ -298,6 +298,17 @@ const submitForm = async (req, res) => {
       });
     }
 
+    const walletUsed = await FormResponse.findOne({
+      walletAddress: wallet,
+      formId: form._id,
+    });
+
+    if (walletUsed) {
+      return res.status(400).json({
+        error: "Wallet address has already submitted this form",
+      });
+    }
+
     const submission = new FormResponse({
       formId: form._id,
       submittedBy: req.user?._id,
@@ -306,6 +317,7 @@ const submitForm = async (req, res) => {
       userAgent: req.get("User-Agent"),
       data: submissionData,
       status: "completed",
+      walletAddress: wallet || null,
     });
 
     await submission.save();
