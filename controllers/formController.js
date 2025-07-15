@@ -470,7 +470,7 @@ const getAnalytics = async (req, res) => {
       },
     ]);
 
-    // Get field analytics (for select, radio, checkbox fields)
+    // Get field analytics (for select, radio, checkbox, text, textarea, email fields)
     const fieldAnalytics = {};
 
     for (const field of form.fields) {
@@ -486,6 +486,66 @@ const getAnalytics = async (req, res) => {
           label: field.label,
           type: field.type,
           responses,
+        };
+      } else if (["text", "textarea", "email"].includes(field.type)) {
+        // For text fields, get all responses and their counts
+        const responses = await FormResponse.aggregate([
+          { $match: { formId: form._id } },
+          { $project: { fieldValue: `$data.${field.id}` } },
+          { $match: { fieldValue: { $exists: true, $ne: null, $ne: "" } } },
+          { $group: { _id: "$fieldValue", count: { $sum: 1 } } },
+          { $sort: { count: -1 } }, // Sort by count descending
+        ]);
+
+        // Get total response count for this field
+        const totalResponses = await FormResponse.countDocuments({
+          formId: form._id,
+          [`data.${field.id}`]: { $exists: true, $ne: null, $ne: "" }
+        });
+
+        fieldAnalytics[field.id] = {
+          label: field.label,
+          type: field.type,
+          responses,
+          totalResponses,
+        };
+      } else if (field.type === "date") {
+        // For date fields, get all responses and their counts
+        const responses = await FormResponse.aggregate([
+          { $match: { formId: form._id } },
+          { $project: { fieldValue: `$data.${field.id}` } },
+          { $match: { fieldValue: { $exists: true, $ne: null, $ne: "" } } },
+          { $group: { _id: "$fieldValue", count: { $sum: 1 } } },
+          { $sort: { _id: 1 } }, // Sort by date ascending
+        ]);
+
+        // Get total response count for this field
+        const totalResponses = await FormResponse.countDocuments({
+          formId: form._id,
+          [`data.${field.id}`]: { $exists: true, $ne: null, $ne: "" }
+        });
+
+        // Get date range analytics
+        const dateStats = await FormResponse.aggregate([
+          { $match: { formId: form._id } },
+          { $project: { fieldValue: `$data.${field.id}` } },
+          { $match: { fieldValue: { $exists: true, $ne: null, $ne: "" } } },
+          { $group: {
+            _id: null,
+            earliest: { $min: "$fieldValue" },
+            latest: { $max: "$fieldValue" }
+          }}
+        ]);
+
+        fieldAnalytics[field.id] = {
+          label: field.label,
+          type: field.type,
+          responses,
+          totalResponses,
+          dateRange: dateStats.length > 0 ? {
+            earliest: dateStats[0].earliest,
+            latest: dateStats[0].latest
+          } : null,
         };
       }
     }
