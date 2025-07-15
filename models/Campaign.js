@@ -42,9 +42,8 @@ const campaignSchema = new mongoose.Schema({
   },
   targetAudience: {
     age: {
-      type: Number,
+      type: String,
       required: true,
-      min: 13,
     },
     gender: {
       type: String,
