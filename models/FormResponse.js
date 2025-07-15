@@ -26,8 +26,6 @@ const formResponseSchema = new mongoose.Schema(
     walletAddress: {
       type: String,
       required: false, // Optional field for wallet address
-      unique: true,
-      sparse: true,
     },
     data: {
       type: Object, // This will store the form responses as key-value pairs
@@ -55,6 +53,9 @@ const formResponseSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Create compound index to ensure walletAddress is unique per formId
+formResponseSchema.index({ formId: 1, walletAddress: 1 }, { unique: true, sparse: true });
 
 const FormResponse = mongoose.model("FormResponse", formResponseSchema);
 module.exports = FormResponse;
