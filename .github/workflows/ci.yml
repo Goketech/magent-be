@@ -14,6 +14,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -21,11 +26,6 @@ jobs:
           cache: "pnpm"
           node-version: 23
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
