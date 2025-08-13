@@ -8,7 +8,7 @@ export class AppService {
     return Effect.gen(function* () {
       const span = yield* Tracer.currentOtelSpan;
       return yield* Effect.succeed({
-        message: 'Hello',
+        message: 'Server is alive!',
         data: {
           uptime: process.uptime(),
           traceId: span.spanContext().traceId,
