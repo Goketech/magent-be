@@ -23,7 +23,7 @@
     "code-quality": "npm run lint && npm run typecheck && npm run test && npm run build && echo Code Quality successfully completed!"
   },
   "dependencies": {
-    "@effect/opentelemetry": "^0.56.1",
+    "@effect/opentelemetry": "^0.56.2",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
