@@ -1,20 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import {
-  EffectModule,
-  EffectValidationPipe,
-  EffectRuntimeInterceptor,
-} from '@nestjs-effect/core';
+import { ValidationPipe } from './helpers/validation-pipe';
+import { ResponseInterceptor } from './helpers/interceptor';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { ValidationExceptionFilter } from './helpers/validation-exception';
 
 @Module({
   imports: [
-    EffectModule.forRoot({
-      autoServiceDiscovery: true,
-      validation: {
-        strict: true,
-      },
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
   ],
   controllers: [AppController],
@@ -22,11 +18,15 @@ import {
     AppService,
     {
       provide: APP_PIPE,
-      useClass: EffectValidationPipe,
+      useClass: ValidationPipe,
     },
     {
       provide: APP_INTERCEPTOR,
-      useClass: EffectRuntimeInterceptor,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ValidationExceptionFilter,
     },
   ],
 })

@@ -1,8 +1,24 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import * as App from './app';
+import { validateEnv } from './helpers/env';
+import { loggerLayer } from './helpers/logger';
+import { ManagedRuntime, Effect, Logger, LogLevel, Cause, Layer } from 'effect';
+import { NodeSdkLive } from './helpers/instrumentation';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
-}
-bootstrap();
+const app = Effect.gen(function* () {
+  yield* App.startApp;
+  yield* validateEnv(process.env).pipe(
+    Effect.tapError((err) => Effect.logError(err, Cause.fail(err))),
+    Effect.catchAll(() => Effect.sync(() => process.exit(1))),
+  );
+  yield* Effect.never;
+});
+
+const appLayer = Layer.mergeAll(loggerLayer, App.fromConfig, NodeSdkLive);
+
+export const runtime = ManagedRuntime.make(appLayer);
+
+app.pipe(
+  Effect.provide(appLayer),
+  Logger.withMinimumLogLevel(LogLevel.All),
+  runtime.runPromise,
+);

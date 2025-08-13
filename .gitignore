@@ -1,7 +1,8 @@
 # compiled output
 /dist
-/node_modules
 /build
+*.tsbuildinfo
+/node_modules
 
 # Logs
 logs
@@ -28,12 +29,12 @@ lerna-debug.log*
 .settings/
 *.sublime-workspace
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# IDE - Cursor
+.cursor/*
+!.cursor/settings.json
+!.cursor/tasks.json
+!.cursor/launch.json
+!.cursor/extensions.json
 
 # dotenv environment variable files
 .env
