@@ -11,7 +11,7 @@ export class AppService {
         message: 'Hello',
         data: {
           uptime: process.uptime(),
-          traceId: span.spanContext().traceId ?? 'no-trace-id',
+          traceId: span.spanContext().traceId,
           version: yield* Config.string('npm_package_version'),
           environment: yield* Config.string('NODE_ENV'),
         },
