@@ -13,10 +13,10 @@ import * as SYS_MSG from './sys-msg';
 import { camelToSnake } from './utils';
 import { Reflector } from '@nestjs/core';
 import { Request, Response } from 'express';
+import { Tracer } from '@effect/opentelemetry';
 import { catchError, mergeMap } from 'rxjs/operators';
 import { IS_PRIVATE_KEY } from '~/decorators/private';
 import { Observable, from, of, throwError } from 'rxjs';
-import { context as otelContext, trace } from '@opentelemetry/api';
 
 const DEFAULT_PRIVATE_FIELDS = ['password'];
 
@@ -59,7 +59,9 @@ export class ResponseInterceptor implements NestInterceptor {
           traceId:
             typeof response === 'object' && 'traceId' in response
               ? (response as Record<string, unknown>)['traceId']
-              : (trace.getSpan(otelContext.active())?.spanContext().traceId ??
+              : (Tracer.currentOtelSpan.pipe(
+                  Effect.map((span) => span.spanContext().traceId),
+                ) ??
                 SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id')),
           timestamp: new Date().toISOString(),
         });
@@ -72,7 +74,9 @@ export class ResponseInterceptor implements NestInterceptor {
           message: exception.message,
           timestamp: new Date().toISOString(),
           traceId:
-            trace.getSpan(otelContext.active())?.spanContext().traceId ??
+            Tracer.currentOtelSpan.pipe(
+              Effect.map((span) => span.spanContext().traceId),
+            ) ??
             SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
         }),
         status,
@@ -91,9 +95,9 @@ export class ResponseInterceptor implements NestInterceptor {
       camelToSnake({
         timestamp: new Date().toISOString(),
         message: SYS_MSG.INTERNAL_SERVER_ERROR,
-        traceId:
-          trace.getSpan(otelContext.active())?.spanContext().traceId ??
-          SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
+        traceId: Tracer.currentOtelSpan.pipe(
+          Effect.map((span) => span.spanContext().traceId),
+        ) ?? SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
       }),
     );
   }
