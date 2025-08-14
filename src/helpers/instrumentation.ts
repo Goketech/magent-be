@@ -46,7 +46,7 @@ export const NodeSdkLive = NodeSdk.layer(
         }),
       ),
     ),
-    Effect.withLogSpan('OpenTelemetry SDK Configuration'),
     Effect.withSpan('OpenTelemetry SDK Configuration'),
+    Effect.withLogSpan('OpenTelemetry SDK Configuration'),
   ),
 );

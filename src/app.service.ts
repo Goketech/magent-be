@@ -12,12 +12,12 @@ export class AppService {
         data: {
           uptime: process.uptime(),
           traceId: span.spanContext().traceId,
-          version: yield* Config.string('npm_package_version'),
           environment: yield* Config.string('NODE_ENV'),
+          version: yield* Config.string('npm_package_version'),
         },
-      });
+      }).pipe(Effect.tap((res) => Effect.annotateCurrentSpan(res)));
     }).pipe(
-      Effect.withSpan('getHello'),
+      Effect.withSpan('AppService.getHello'),
       Effect.tapError((err) => Effect.logError(err, Cause.fail(err))),
     );
   }

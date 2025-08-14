@@ -4,9 +4,10 @@ import {
   HttpException,
   ExceptionFilter,
 } from '@nestjs/common';
+import { Effect } from 'effect';
 import { Response } from 'express';
 import * as SYS_MSG from './sys-msg';
-import { context as otelContext, trace } from '@opentelemetry/api';
+import { Tracer } from '@effect/opentelemetry';
 
 @Catch(HttpException)
 export class ValidationExceptionFilter implements ExceptionFilter {
@@ -23,11 +24,15 @@ export class ValidationExceptionFilter implements ExceptionFilter {
 
     const traceId =
       (body['traceId'] as string) ??
-      trace.getSpan(otelContext.active())?.spanContext().traceId ??
-      SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id');
+      Tracer.currentOtelSpan.pipe(
+        Effect.map((span) => span.spanContext().traceId),
+      );
+
+    const message =
+      (body['message'] as string) ?? SYS_MSG.INTERNAL_SERVER_ERROR;
 
     response.status(status).json({
-      message: (body['message'] as string) ?? 'Error',
+      message,
       traceId,
       timestamp: new Date().toISOString(),
     });

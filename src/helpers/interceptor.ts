@@ -61,8 +61,7 @@ export class ResponseInterceptor implements NestInterceptor {
               ? (response as Record<string, unknown>)['traceId']
               : (Tracer.currentOtelSpan.pipe(
                   Effect.map((span) => span.spanContext().traceId),
-                ) ??
-                SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id')),
+                ) ?? SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id')),
           timestamp: new Date().toISOString(),
         });
 
@@ -76,8 +75,7 @@ export class ResponseInterceptor implements NestInterceptor {
           traceId:
             Tracer.currentOtelSpan.pipe(
               Effect.map((span) => span.spanContext().traceId),
-            ) ??
-            SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
+            ) ?? SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
         }),
         status,
       );
@@ -95,9 +93,10 @@ export class ResponseInterceptor implements NestInterceptor {
       camelToSnake({
         timestamp: new Date().toISOString(),
         message: SYS_MSG.INTERNAL_SERVER_ERROR,
-        traceId: Tracer.currentOtelSpan.pipe(
-          Effect.map((span) => span.spanContext().traceId),
-        ) ?? SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
+        traceId:
+          Tracer.currentOtelSpan.pipe(
+            Effect.map((span) => span.spanContext().traceId),
+          ) ?? SYS_MSG.RESOURCE_FETCH_FAILED('Trace Id'),
       }),
     );
   }
